@@ -11,7 +11,7 @@
       state: latest
 
   - name: Modify smb.conf
-    lineinfile: dest=/etc/samba/smb.conf insertafter="[global]"
+    lineinfile: dest=/etc/samba/smb.conf insertafter="[global]" state=present backup=yes backrefs=yes
     with_items:
       - 'workgroup = DEVELOPERTOWN'
       - 'winbind use default domain = yes'
