@@ -39,4 +39,4 @@
 
 
   - name: Join with net join
-    command: net join -U 
+    command: net join -U ss
