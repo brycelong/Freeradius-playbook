@@ -2,19 +2,41 @@
 
 - hosts: all
   become: true
+  vars_prompt:
+     - name: "bind_password"
+       prompt: "password for bind"
+       private: yes
+
   tasks: 
 
-  - name: install Samba package
+  - name: install packages
     apt:
       name: 
         - samba
+        - winbind
       state: latest
 
-  - name: Modify smb.conf
-    lineinfile: dest=/etc/samba/smb.conf insertafter="[global]" state=present backup=yes backrefs=yes
-    with_items:
-      - 'workgroup = DEVELOPERTOWN'
-      - 'winbind use default domain = yes'
-      - 'security = ads'
-      - 'ntlm auth = mschapv2-and-ntlmv2-only'
-      - 'realm = developertown.com'
+  # - name: comment out workgorup in smb.conf file
+  #   replace:
+  #     path: /etc/samba/smb.conf
+  #     regexp: 'workgroup'
+  #     replace: '#workgroup'
+
+  # - name: Add configs to smb.conf
+  #   lineinfile: 
+  #     path: /etc/samba/smb.conf
+  #     insertafter: '#workgroup' 
+  #     line: '{{ item }}' 
+  #     state: present 
+  #     backup: yes
+
+  #   with_items:
+  #     - 'workgroup = DEVELOPERTOWN'
+  #     - 'winbind use default domain = yes'
+  #     - 'security = ads'
+  #     - 'ntlm auth = mschapv2-and-ntlmv2-only'
+  #     - 'realm = developertown.com'
+
+
+  - name: Join with net join
+    command: net join -U 
