@@ -10,4 +10,11 @@
         - samba
       state: latest
 
-      
+  - name: Modify smb.conf
+    lineinfile: dest=/etc/samba/smb.conf insertafter="[global]"
+    with_items:
+      - 'workgroup = DEVELOPERTOWN'
+      - 'winbind use default domain = yes'
+      - 'security = ads'
+      - 'ntlm auth = mschapv2-and-ntlmv2-only'
+      - 'realm = developertown.com'
