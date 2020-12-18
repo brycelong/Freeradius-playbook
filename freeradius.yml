@@ -1,0 +1,13 @@
+---
+
+- hosts: all
+  become: true
+  tasks: 
+
+  - name: install Samba package
+    apt:
+      name: 
+        - samba
+      state: latest
+
+      
