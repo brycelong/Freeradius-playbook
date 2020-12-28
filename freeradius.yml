@@ -2,19 +2,22 @@
 
 - hosts: all
   become: true
-  vars_prompt:
-     - name: "bind_password"
-       prompt: "password for bind"
-       private: yes
+  # vars_prompt:
+  #    - name: "bind_user"
+  #      prompt: "username for bind"
+  #      private: yes
+
+  #    - name: "bind_password"
+  #      prompt: "password for bind"
+  #      private: yes
 
   tasks: 
 
-  - name: install packages
-    apt:
-      name: 
-        - samba
-        - winbind
-      state: latest
+  # - name: install samba
+  #   apt:
+  #     name: 
+  #       - samba
+  #     state: latest
 
   # - name: comment out workgorup in smb.conf file
   #   replace:
@@ -38,5 +41,32 @@
   #     - 'realm = developertown.com'
 
 
-  - name: Join with net join
-    command: net join -U ss
+  # - name: Join with net join
+  #   command: net join -U "{{bind_user}}"%"{{bind_password}}"
+
+  # - name: Install winbind
+  #   apt: 
+  #     name: 
+  #      - winbind
+  #     state: latest
+
+
+  # - name: Add configs to /etc/apt/sources.list
+  #   lineinfile: 
+  #     path: /etc/apt/sources.list
+  #     line: '{{ item }}' 
+
+  #   with_items:
+  #       - 'deb https://packages.networkradius.com/releases/ubuntu-bionic bionic main'
+
+  # - name: add networkradius package key to linux box
+  #   command: "{{ item }}"
+  #   with_items:
+  #   - apt-key adv --keyserver keys.gnupg.net --recv-key 0x41382202
+  #   - apt-get update
+
+- name: Install freeraadius
+  apt:
+   name: 
+    - freeradius
+  state: latest
