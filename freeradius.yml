@@ -2,71 +2,114 @@
 
 - hosts: all
   become: true
-  # vars_prompt:
-  #    - name: "bind_user"
-  #      prompt: "username for bind"
-  #      private: yes
+  vars_prompt:
+     - name: "bind_user"
+       prompt: "username for bind"
+       private: yes
 
-  #    - name: "bind_password"
-  #      prompt: "password for bind"
-  #      private: yes
+     - name: "bind_password"
+       prompt: "password for bind"
+       private: yes
 
   tasks: 
 
-  # - name: install samba
-  #   apt:
-  #     name: 
-  #       - samba
-  #     state: latest
+  - name: install samba
+    apt:
+      name: 
+        - samba
+      state: latest
 
-  # - name: comment out workgorup in smb.conf file
-  #   replace:
-  #     path: /etc/samba/smb.conf
-  #     regexp: 'workgroup'
-  #     replace: '#workgroup'
+  - name: comment out workgorup in smb.conf file
+    replace:
+      path: /etc/samba/smb.conf
+      regexp: 'workgroup'
+      replace: '#workgroup'
 
-  # - name: Add configs to smb.conf
-  #   lineinfile: 
-  #     path: /etc/samba/smb.conf
-  #     insertafter: '#workgroup' 
-  #     line: '{{ item }}' 
-  #     state: present 
-  #     backup: yes
+  - name: Add configs to smb.conf
+    lineinfile: 
+      path: /etc/samba/smb.conf
+      insertafter: '#workgroup' 
+      line: '{{ item }}' 
+      state: present 
+      backup: yes
 
-  #   with_items:
-  #     - 'workgroup = DEVELOPERTOWN'
-  #     - 'winbind use default domain = yes'
-  #     - 'security = ads'
-  #     - 'ntlm auth = mschapv2-and-ntlmv2-only'
-  #     - 'realm = developertown.com'
-
-
-  # - name: Join with net join
-  #   command: net join -U "{{bind_user}}"%"{{bind_password}}"
-
-  # - name: Install winbind
-  #   apt: 
-  #     name: 
-  #      - winbind
-  #     state: latest
+    with_items:
+      - 'workgroup = DEVELOPERTOWN'
+      - 'winbind use default domain = yes'
+      - 'security = ads'
+      - 'ntlm auth = mschapv2-and-ntlmv2-only'
+      - 'realm = developertown.com'
 
 
-  # - name: Add configs to /etc/apt/sources.list
-  #   lineinfile: 
-  #     path: /etc/apt/sources.list
-  #     line: '{{ item }}' 
+  - name: Join with net join
+    command: net join -U "{{bind_user}}"%"{{bind_password}}"
 
-  #   with_items:
-  #       - 'deb https://packages.networkradius.com/releases/ubuntu-bionic bionic main'
+  - name: Install winbind
+    apt: 
+      name: 
+       - winbind
+      state: latest
 
-  # - name: add networkradius package key to linux box
-  #   command: "{{ item }}"
-  #   with_items:
-  #   - apt-key adv --keyserver keys.gnupg.net --recv-key 0x41382202
-  #   - apt-get update
 
-- name: Install freeraadius
-  apt:
-   name: 
-    - freeradius
-  state: latest
+  - name: Add configs to /etc/apt/sources.list
+    lineinfile: 
+      path: /etc/apt/sources.list
+      line: '{{ item }}' 
+
+    with_items:
+        - 'deb https://packages.networkradius.com/releases/ubuntu-bionic bionic main'
+
+  - name: add networkradius package key to linux box
+    command: "{{ item }}"
+    with_items:
+    - apt-key adv --keyserver keys.gnupg.net --recv-key 0x41382202
+    - apt-get update
+
+  - name: Install freeraadius
+    apt:
+     name: 
+      - freeradius
+     state: latest
+
+  - name: configure free radius clients.conf
+    lineinfile: 
+     path: /etc/freeradius/clients.conf
+     line: '{{ item }}'
+
+    with_items:
+    - 'client my_wifi { 
+         ipaddr = 68.45.161.30,
+         secret = testing123 
+         }'
+
+  - name: configure freeradius ntlm_auth module 
+    replace: 
+     path: /etc/freeradius/mods-available/ntlm_auth
+     regexp: 'program = "/path/to/ntlm_auth --request-nt-key --domain=MYDOMAIN --username=%{mschap:User-Name} --password=%{User-Password}'
+     replace: 'program = "/usr/bin/ntlm_auth --request-nt-key --domain=developertown.com --username=%{mschap:User-Name} --password=%{User-Password}'
+
+  - name: configure freeradius default file
+    lineinfile:
+     path: /etc/freeradius/sites-available/default
+     insertafter: 'authenticate {'
+     state: present
+     line: 'ntlm_auth'
+
+  - name: configure freeradius inner-tunnel file
+    lineinfile:
+     path: /etc/freeradius/sites-available/inner-tunnel
+     insertafter: 'authenticate {'
+     state: present
+     line: 'ntlm_auth'
+
+  - name: configure freeradius default file
+    replace:
+     path: /etc/freeradius/mods-available/mschap
+     regexp: '#\tntlm_auth = "/path/to/ntlm_auth --request-nt-key --username={{ "%{%{" }}Stripped-User-Name}:-{{ "%{%{" }}User-Name}:-None}} --challenge={{ "%{%{" }}mschap:Challenge}:-00} --nt-response={{ "%{%{" }}mschap:NT-Response}:-00}'
+     replace: ntlm_auth = "/usr/bin/ntlm_auth --request-nt-key --username={{ "%{" }}mschap:User-Name:-None} --domain={{ "%{%{" }}mschap:NT-Domain}:-developertown} --challenge={{ "%{" }}mschap:Challenge:-00} --nt-response=%{mschap:NT-Response:-00}'
+
+  - name: Add freeraad to winbind priv group
+    command: usermod -aG winbindd_priv freerad
+    
+  - name: restart freeradius service
+    command: systemctl restart freeradius
