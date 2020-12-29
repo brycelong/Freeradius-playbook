@@ -3,6 +3,10 @@
 - hosts: all
   become: true
   vars_prompt:
+     - name: "client_ip"
+       prompt: "client ip address"
+       private: no
+
      - name: "bind_user"
        prompt: "username for bind"
        private: yes
@@ -21,7 +25,7 @@
 
   - name: comment out workgorup in smb.conf file
     replace:
-      path: /etc/samba/smb.conf
+      path: /etc/samba/smb.conf 
       regexp: 'workgroup'
       replace: '#workgroup'
 
@@ -78,7 +82,7 @@
 
     with_items:
     - 'client my_wifi { 
-         ipaddr = 68.45.161.30,
+         ipaddr = {{client_ip}},
          secret = testing123 
          }'
 
@@ -106,9 +110,9 @@
     replace:
      path: /etc/freeradius/mods-available/mschap
      regexp: '#\tntlm_auth = "/path/to/ntlm_auth --request-nt-key --username={{ "%{%{" }}Stripped-User-Name}:-{{ "%{%{" }}User-Name}:-None}} --challenge={{ "%{%{" }}mschap:Challenge}:-00} --nt-response={{ "%{%{" }}mschap:NT-Response}:-00}'
-     replace: ntlm_auth = "/usr/bin/ntlm_auth --request-nt-key --username={{ "%{" }}mschap:User-Name:-None} --domain={{ "%{%{" }}mschap:NT-Domain}:-developertown} --challenge={{ "%{" }}mschap:Challenge:-00} --nt-response=%{mschap:NT-Response:-00}'
+     replace: 'ntlm_auth = "/usr/bin/ntlm_auth --request-nt-key --username={{ "%{" }}mschap:User-Name:-None} --domain={{ "%{%{" }}mschap:NT-Domain}:-developertown} --challenge={{ "%{" }}mschap:Challenge:-00} --nt-response=%{mschap:NT-Response:-00}'
 
-  - name: Add freeraad to winbind priv group
+  - name: Add freerad to winbind priv group
     command: usermod -aG winbindd_priv freerad
     
   - name: restart freeradius service
