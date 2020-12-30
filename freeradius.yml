@@ -15,6 +15,14 @@
        prompt: "password for bind"
        private: yes
 
+     - name: "domain_name"
+       prompt: "Name of your domain"
+       private: no
+
+     - name: "realm_name"
+       prompt: "realm name for freeradius example - testdomain.com"
+       private: no
+
   tasks: 
 
   - name: install samba
@@ -38,11 +46,11 @@
       backup: yes
 
     with_items:
-      - 'workgroup = DEVELOPERTOWN'
+      - 'workgroup = {{ domain_name }}'
       - 'winbind use default domain = yes'
       - 'security = ads'
       - 'ntlm auth = mschapv2-and-ntlmv2-only'
-      - 'realm = developertown.com'
+      - 'realm = {{ realm_name }}'
 
 
   - name: Join with net join
@@ -90,7 +98,7 @@
     replace: 
      path: /etc/freeradius/mods-available/ntlm_auth
      regexp: 'program = "/path/to/ntlm_auth --request-nt-key --domain=MYDOMAIN --username=%{mschap:User-Name} --password=%{User-Password}'
-     replace: 'program = "/usr/bin/ntlm_auth --request-nt-key --domain=developertown.com --username=%{mschap:User-Name} --password=%{User-Password}'
+     replace: 'program = "/usr/bin/ntlm_auth --request-nt-key --domain={{domain_name}} --username=%{mschap:User-Name} --password=%{User-Password}'
 
   - name: configure freeradius default file
     lineinfile:
@@ -110,7 +118,7 @@
     replace:
      path: /etc/freeradius/mods-available/mschap
      regexp: '#\tntlm_auth = "/path/to/ntlm_auth --request-nt-key --username={{ "%{%{" }}Stripped-User-Name}:-{{ "%{%{" }}User-Name}:-None}} --challenge={{ "%{%{" }}mschap:Challenge}:-00} --nt-response={{ "%{%{" }}mschap:NT-Response}:-00}'
-     replace: 'ntlm_auth = "/usr/bin/ntlm_auth --request-nt-key --username={{ "%{" }}mschap:User-Name:-None} --domain={{ "%{%{" }}mschap:NT-Domain}:-developertown} --challenge={{ "%{" }}mschap:Challenge:-00} --nt-response=%{mschap:NT-Response:-00}'
+     replace: 'ntlm_auth = "/usr/bin/ntlm_auth --request-nt-key --username={{ "%{" }}mschap:User-Name:-None} --domain={{ "%{%{" }}mschap:NT-Domain}:-{{domain_name}}} --challenge={{ "%{" }}mschap:Challenge:-00} --nt-response=%{mschap:NT-Response:-00}'
 
   - name: Add freerad to winbind priv group
     command: usermod -aG winbindd_priv freerad
