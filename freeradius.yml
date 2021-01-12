@@ -30,7 +30,7 @@
   - name: install samba
     apt:
       name: 
-        - samba
+         - samba
       state: latest
 
   - name: comment out workgorup in smb.conf file
@@ -64,20 +64,15 @@
        - winbind
       state: latest
 
+  - name: add keyfile for apt
+    ansible.builtin.apt_key:
+      keyserver: keys.gnupg.net
+      id: '0x41382202'
 
-  - name: Add configs to /etc/apt/sources.list
-    lineinfile: 
-      path: /etc/apt/sources.list
-      line: '{{ item }}' 
-
-    with_items:
-        - 'deb https://packages.networkradius.com/releases/ubuntu-bionic bionic main'
-
-  - name: add networkradius package key to linux box
-    command: "{{ item }}"
-    with_items:
-    - apt-key adv --keyserver keys.gnupg.net --recv-key 0x41382202
-    - apt-get update
+  - name: Add newest verison of freeradius to apt
+    apt_repository: 
+      repo: deb https://packages.networkradius.com/releases/ubuntu-bionic bionic main
+      state: present
 
   - name: Install freeraadius
     apt:
@@ -123,7 +118,16 @@
      replace: 'ntlm_auth = "/usr/bin/ntlm_auth --request-nt-key --username={{ "%{" }}mschap:User-Name:-None} --domain={{ "%{%{" }}mschap:NT-Domain}:-{{domain_name}}} --challenge={{ "%{" }}mschap:Challenge:-00} --nt-response=%{mschap:NT-Response:-00}'
 
   - name: Add freerad to winbind priv group
-    command: usermod -aG winbindd_priv freerad
+    user:
+      name: freerad
+      groups: winbindd_priv
+      append: yes
     
   - name: restart freeradius service
     command: systemctl restart freeradius
+
+  - name: Restart Freeradius service
+    ansible.builtin.service:
+      name: freeradius
+      state: restarted
+      enabled: yes
