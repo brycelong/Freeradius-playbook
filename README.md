@@ -20,7 +20,7 @@ Once Azure ADDS is setup Run this playbook it will need the following items
 5. Name of your Azure Domain Services Domain (in all caps)
 6. Name of the realm to be configured ( IE testdomain.com)
 
-After the above inputs are provided the runbook will configure the linux vm install freeradius and configure it to use the above setup. 
+After the above inputs are provided the runbook will configure the linux vm with freeradius and configure it. 
 
 Note** This setup uses the default Snake oil certs that free radius provides! To secure your auth connection you will need to configure This setup with a proper
 cert!! 
