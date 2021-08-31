@@ -33,7 +33,7 @@
          - samba
       state: latest
 
-  - name: comment out workgorup in smb.conf file
+  - name: comment out workgroup in smb.conf file
     replace:
       path: /etc/samba/smb.conf 
       regexp: 'workgroup'
